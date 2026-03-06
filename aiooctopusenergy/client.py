@@ -107,6 +107,7 @@ class OctopusEnergyClient:
         page_size: int = DEFAULT_PAGE_SIZE,
         period_from: datetime | None = None,
         period_to: datetime | None = None,
+        extra_params: dict[str, str] | None = None,
     ) -> list[dict]:
         """Fetch all pages from a paginated endpoint."""
         params: list[str] = [f"page_size={page_size}"]
@@ -114,6 +115,9 @@ class OctopusEnergyClient:
             params.append(f"period_from={period_from.isoformat()}")
         if period_to:
             params.append(f"period_to={period_to.isoformat()}")
+        if extra_params:
+            for key, value in extra_params.items():
+                params.append(f"{key}={value}")
 
         separator = "&" if "?" in path else "?"
         url = f"{path}{separator}{'&'.join(params)}"
@@ -221,8 +225,10 @@ class OctopusEnergyClient:
         period_from: datetime | None = None,
         period_to: datetime | None = None,
         page_size: int = DEFAULT_PAGE_SIZE,
+        group_by: str | None = None,
+        order_by: str | None = None,
     ) -> list[Consumption]:
-        """Get half-hourly electricity consumption readings.
+        """Get electricity consumption readings.
 
         Args:
             mpan: Meter Point Administration Number.
@@ -230,19 +236,27 @@ class OctopusEnergyClient:
             period_from: Start of period (inclusive).
             period_to: End of period (inclusive).
             page_size: Number of results per page.
+            group_by: Aggregate by period: "day", "week", "month", "quarter".
+            order_by: Sort order: "period" for ascending.
 
         Returns:
-            List of consumption readings ordered by interval_start descending.
+            List of consumption readings.
         """
         path = (
             f"/v1/electricity-meter-points/{mpan}"
             f"/meters/{serial_number}/consumption/"
         )
+        extra: dict[str, str] = {}
+        if group_by:
+            extra["group_by"] = group_by
+        if order_by:
+            extra["order_by"] = order_by
         results = await self._get_paginated(
             path,
             page_size=page_size,
             period_from=period_from,
             period_to=period_to,
+            extra_params=extra if extra else None,
         )
         return [
             Consumption(
@@ -261,8 +275,10 @@ class OctopusEnergyClient:
         period_from: datetime | None = None,
         period_to: datetime | None = None,
         page_size: int = DEFAULT_PAGE_SIZE,
+        group_by: str | None = None,
+        order_by: str | None = None,
     ) -> list[Consumption]:
-        """Get half-hourly gas consumption readings.
+        """Get gas consumption readings.
 
         Args:
             mprn: Meter Point Reference Number.
@@ -270,19 +286,27 @@ class OctopusEnergyClient:
             period_from: Start of period (inclusive).
             period_to: End of period (inclusive).
             page_size: Number of results per page.
+            group_by: Aggregate by period: "day", "week", "month", "quarter".
+            order_by: Sort order: "period" for ascending.
 
         Returns:
-            List of consumption readings ordered by interval_start descending.
+            List of consumption readings.
         """
         path = (
             f"/v1/gas-meter-points/{mprn}"
             f"/meters/{serial_number}/consumption/"
         )
+        extra: dict[str, str] = {}
+        if group_by:
+            extra["group_by"] = group_by
+        if order_by:
+            extra["order_by"] = order_by
         results = await self._get_paginated(
             path,
             page_size=page_size,
             period_from=period_from,
             period_to=period_to,
+            extra_params=extra if extra else None,
         )
         return [
             Consumption(
@@ -453,6 +477,174 @@ class OctopusEnergyClient:
         )
         return [
             StandingCharge(
+                value_exc_vat=r["value_exc_vat"],
+                value_inc_vat=r["value_inc_vat"],
+                valid_from=self._require_datetime(r["valid_from"]),
+                valid_to=self._parse_datetime(r.get("valid_to")),
+            )
+            for r in results
+        ]
+
+    async def get_electricity_day_rates(
+        self,
+        product_code: str,
+        tariff_code: str,
+        *,
+        period_from: datetime | None = None,
+        period_to: datetime | None = None,
+        page_size: int = DEFAULT_PAGE_SIZE,
+    ) -> list[Rate]:
+        """Get electricity day unit rates for a dual-register tariff.
+
+        Args:
+            product_code: Product code.
+            tariff_code: Tariff code (E-2R prefix).
+            period_from: Start of period (inclusive).
+            period_to: End of period (inclusive).
+            page_size: Number of results per page.
+
+        Returns:
+            List of day rates.
+        """
+        path = (
+            f"/v1/products/{product_code}"
+            f"/electricity-tariffs/{tariff_code}/day-unit-rates/"
+        )
+        results = await self._get_paginated(
+            path,
+            auth=False,
+            page_size=page_size,
+            period_from=period_from,
+            period_to=period_to,
+        )
+        return [
+            Rate(
+                value_exc_vat=r["value_exc_vat"],
+                value_inc_vat=r["value_inc_vat"],
+                valid_from=self._require_datetime(r["valid_from"]),
+                valid_to=self._parse_datetime(r.get("valid_to")),
+            )
+            for r in results
+        ]
+
+    async def get_electricity_night_rates(
+        self,
+        product_code: str,
+        tariff_code: str,
+        *,
+        period_from: datetime | None = None,
+        period_to: datetime | None = None,
+        page_size: int = DEFAULT_PAGE_SIZE,
+    ) -> list[Rate]:
+        """Get electricity night unit rates for a dual-register tariff.
+
+        Args:
+            product_code: Product code.
+            tariff_code: Tariff code (E-2R prefix).
+            period_from: Start of period (inclusive).
+            period_to: End of period (inclusive).
+            page_size: Number of results per page.
+
+        Returns:
+            List of night rates.
+        """
+        path = (
+            f"/v1/products/{product_code}"
+            f"/electricity-tariffs/{tariff_code}/night-unit-rates/"
+        )
+        results = await self._get_paginated(
+            path,
+            auth=False,
+            page_size=page_size,
+            period_from=period_from,
+            period_to=period_to,
+        )
+        return [
+            Rate(
+                value_exc_vat=r["value_exc_vat"],
+                value_inc_vat=r["value_inc_vat"],
+                valid_from=self._require_datetime(r["valid_from"]),
+                valid_to=self._parse_datetime(r.get("valid_to")),
+            )
+            for r in results
+        ]
+
+    async def get_gas_day_rates(
+        self,
+        product_code: str,
+        tariff_code: str,
+        *,
+        period_from: datetime | None = None,
+        period_to: datetime | None = None,
+        page_size: int = DEFAULT_PAGE_SIZE,
+    ) -> list[Rate]:
+        """Get gas day unit rates for a dual-register tariff.
+
+        Args:
+            product_code: Product code.
+            tariff_code: Tariff code.
+            period_from: Start of period (inclusive).
+            period_to: End of period (inclusive).
+            page_size: Number of results per page.
+
+        Returns:
+            List of day rates.
+        """
+        path = (
+            f"/v1/products/{product_code}"
+            f"/gas-tariffs/{tariff_code}/day-unit-rates/"
+        )
+        results = await self._get_paginated(
+            path,
+            auth=False,
+            page_size=page_size,
+            period_from=period_from,
+            period_to=period_to,
+        )
+        return [
+            Rate(
+                value_exc_vat=r["value_exc_vat"],
+                value_inc_vat=r["value_inc_vat"],
+                valid_from=self._require_datetime(r["valid_from"]),
+                valid_to=self._parse_datetime(r.get("valid_to")),
+            )
+            for r in results
+        ]
+
+    async def get_gas_night_rates(
+        self,
+        product_code: str,
+        tariff_code: str,
+        *,
+        period_from: datetime | None = None,
+        period_to: datetime | None = None,
+        page_size: int = DEFAULT_PAGE_SIZE,
+    ) -> list[Rate]:
+        """Get gas night unit rates for a dual-register tariff.
+
+        Args:
+            product_code: Product code.
+            tariff_code: Tariff code.
+            period_from: Start of period (inclusive).
+            period_to: End of period (inclusive).
+            page_size: Number of results per page.
+
+        Returns:
+            List of night rates.
+        """
+        path = (
+            f"/v1/products/{product_code}"
+            f"/gas-tariffs/{tariff_code}/night-unit-rates/"
+        )
+        results = await self._get_paginated(
+            path,
+            auth=False,
+            page_size=page_size,
+            period_from=period_from,
+            period_to=period_to,
+        )
+        return [
+            Rate(
                 value_exc_vat=r["value_exc_vat"],
                 value_inc_vat=r["value_inc_vat"],
                 valid_from=self._require_datetime(r["valid_from"]),

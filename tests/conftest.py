@@ -53,6 +53,24 @@ def grid_supply_points_response() -> dict:
 
 
 @pytest.fixture
+def day_rates_response() -> dict:
+    """Return mock day rates API response."""
+    return json.loads((FIXTURES / "day_rates.json").read_text())
+
+
+@pytest.fixture
+def night_rates_response() -> dict:
+    """Return mock night rates API response."""
+    return json.loads((FIXTURES / "night_rates.json").read_text())
+
+
+@pytest.fixture
+def consumption_daily_response() -> dict:
+    """Return mock daily consumption API response."""
+    return json.loads((FIXTURES / "consumption_daily.json").read_text())
+
+
+@pytest.fixture
 def products_response() -> dict:
     """Return mock products API response."""
     return json.loads((FIXTURES / "products.json").read_text())
