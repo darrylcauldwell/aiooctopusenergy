@@ -1,0 +1,21 @@
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "value_exc_vat": 28.55,
+      "value_inc_vat": 29.9775,
+      "valid_from": "2026-03-06T05:30:00Z",
+      "valid_to": "2026-03-07T00:30:00Z",
+      "payment_method": null
+    },
+    {
+      "value_exc_vat": 27.80,
+      "value_inc_vat": 29.19,
+      "valid_from": "2026-03-05T05:30:00Z",
+      "valid_to": "2026-03-06T00:30:00Z",
+      "payment_method": null
+    }
+  ]
+}

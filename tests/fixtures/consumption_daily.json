@@ -1,0 +1,22 @@
+{
+  "count": 3,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "consumption": 8.456,
+      "interval_start": "2026-03-05T00:00:00Z",
+      "interval_end": "2026-03-06T00:00:00Z"
+    },
+    {
+      "consumption": 7.234,
+      "interval_start": "2026-03-04T00:00:00Z",
+      "interval_end": "2026-03-05T00:00:00Z"
+    },
+    {
+      "consumption": 9.123,
+      "interval_start": "2026-03-03T00:00:00Z",
+      "interval_end": "2026-03-04T00:00:00Z"
+    }
+  ]
+}
