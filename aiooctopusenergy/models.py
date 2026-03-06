@@ -7,6 +7,30 @@ from datetime import datetime
 
 
 @dataclass(frozen=True)
+class SingleRegisterTariff:
+    """A single-register tariff for a specific region and payment method."""
+
+    code: str
+    standard_unit_rate_exc_vat: float
+    standard_unit_rate_inc_vat: float
+    standing_charge_exc_vat: float
+    standing_charge_inc_vat: float
+
+
+@dataclass(frozen=True)
+class DualRegisterTariff:
+    """A dual-register (day/night) tariff for a specific region."""
+
+    code: str
+    day_unit_rate_exc_vat: float
+    day_unit_rate_inc_vat: float
+    night_unit_rate_exc_vat: float
+    night_unit_rate_inc_vat: float
+    standing_charge_exc_vat: float
+    standing_charge_inc_vat: float
+
+
+@dataclass(frozen=True)
 class Product:
     """An Octopus Energy product (tariff)."""
 
@@ -16,6 +40,42 @@ class Product:
     description: str
     is_variable: bool
     brand: str
+    is_green: bool = False
+    is_tracker: bool = False
+    is_prepay: bool = False
+    is_restricted: bool = False
+    term: int | None = None
+    available_from: datetime | None = None
+    available_to: datetime | None = None
+
+
+@dataclass(frozen=True)
+class ProductDetail:
+    """Detailed product information including regional tariffs."""
+
+    code: str
+    full_name: str
+    display_name: str
+    description: str
+    is_variable: bool
+    is_green: bool
+    is_tracker: bool
+    is_prepay: bool
+    is_restricted: bool
+    is_business: bool
+    brand: str
+    term: int | None
+    available_from: datetime | None
+    available_to: datetime | None
+    single_register_electricity_tariffs: dict[str, SingleRegisterTariff] = field(
+        default_factory=dict
+    )
+    dual_register_electricity_tariffs: dict[str, DualRegisterTariff] = field(
+        default_factory=dict
+    )
+    single_register_gas_tariffs: dict[str, SingleRegisterTariff] = field(
+        default_factory=dict
+    )
 
 
 @dataclass(frozen=True)

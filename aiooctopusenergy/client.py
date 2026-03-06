@@ -19,13 +19,16 @@ from .models import (
     Account,
     Agreement,
     Consumption,
+    DualRegisterTariff,
     ElectricityMeterPoint,
     GasMeterPoint,
     GridSupplyPoint,
     Meter,
     Product,
+    ProductDetail,
     Property,
     Rate,
+    SingleRegisterTariff,
     StandingCharge,
 )
 
@@ -466,12 +469,22 @@ class OctopusEnergyClient:
         *,
         is_variable: bool | None = None,
         is_business: bool = False,
+        is_green: bool | None = None,
+        is_prepay: bool | None = None,
+        is_tracker: bool | None = None,
+        brand: str | None = None,
+        available_at: datetime | None = None,
     ) -> list[Product]:
         """Get available energy products.
 
         Args:
             is_variable: Filter by variable/fixed. None returns all.
             is_business: Include business products. Defaults to False.
+            is_green: Filter by green tariffs. None returns all.
+            is_prepay: Filter by prepay tariffs. None returns all.
+            is_tracker: Filter by tracker tariffs. None returns all.
+            brand: Filter by brand name.
+            available_at: Filter products available at this datetime.
 
         Returns:
             List of available products.
@@ -481,6 +494,16 @@ class OctopusEnergyClient:
             params.append(f"is_variable={'true' if is_variable else 'false'}")
         if not is_business:
             params.append("is_business=false")
+        if is_green is not None:
+            params.append(f"is_green={'true' if is_green else 'false'}")
+        if is_prepay is not None:
+            params.append(f"is_prepay={'true' if is_prepay else 'false'}")
+        if is_tracker is not None:
+            params.append(f"is_tracker={'true' if is_tracker else 'false'}")
+        if brand is not None:
+            params.append(f"brand={brand}")
+        if available_at is not None:
+            params.append(f"available_at={available_at.isoformat()}")
 
         query = f"?{'&'.join(params)}" if params else ""
         data = await self._get(f"/v1/products/{query}", auth=False)
@@ -492,9 +515,103 @@ class OctopusEnergyClient:
                 description=r.get("description", ""),
                 is_variable=r["is_variable"],
                 brand=r["brand"],
+                is_green=r.get("is_green", False),
+                is_tracker=r.get("is_tracker", False),
+                is_prepay=r.get("is_prepay", False),
+                is_restricted=r.get("is_restricted", False),
+                term=r.get("term"),
+                available_from=self._parse_datetime(r.get("available_from")),
+                available_to=self._parse_datetime(r.get("available_to")),
             )
             for r in data.get("results", [])
         ]
+
+    @staticmethod
+    def _parse_single_register_tariff(
+        region_data: dict,
+    ) -> SingleRegisterTariff | None:
+        """Parse a single-register tariff from a region's payment method data."""
+        for tariff_data in region_data.values():
+            return SingleRegisterTariff(
+                code=tariff_data["code"],
+                standard_unit_rate_exc_vat=tariff_data["standard_unit_rate_exc_vat"],
+                standard_unit_rate_inc_vat=tariff_data["standard_unit_rate_inc_vat"],
+                standing_charge_exc_vat=tariff_data["standing_charge_exc_vat"],
+                standing_charge_inc_vat=tariff_data["standing_charge_inc_vat"],
+            )
+        return None
+
+    @staticmethod
+    def _parse_dual_register_tariff(
+        region_data: dict,
+    ) -> DualRegisterTariff | None:
+        """Parse a dual-register tariff from a region's payment method data."""
+        for tariff_data in region_data.values():
+            return DualRegisterTariff(
+                code=tariff_data["code"],
+                day_unit_rate_exc_vat=tariff_data["day_unit_rate_exc_vat"],
+                day_unit_rate_inc_vat=tariff_data["day_unit_rate_inc_vat"],
+                night_unit_rate_exc_vat=tariff_data["night_unit_rate_exc_vat"],
+                night_unit_rate_inc_vat=tariff_data["night_unit_rate_inc_vat"],
+                standing_charge_exc_vat=tariff_data["standing_charge_exc_vat"],
+                standing_charge_inc_vat=tariff_data["standing_charge_inc_vat"],
+            )
+        return None
+
+    async def get_product_detail(self, product_code: str) -> ProductDetail:
+        """Get detailed product info including regional tariffs.
+
+        Args:
+            product_code: Product code (e.g. "AGILE-24-10-01").
+
+        Returns:
+            ProductDetail with regional tariff information.
+        """
+        data = await self._get(f"/v1/products/{product_code}/", auth=False)
+
+        single_elec: dict[str, SingleRegisterTariff] = {}
+        for region, region_data in data.get(
+            "single_register_electricity_tariffs", {}
+        ).items():
+            tariff = self._parse_single_register_tariff(region_data)
+            if tariff:
+                single_elec[region] = tariff
+
+        dual_elec: dict[str, DualRegisterTariff] = {}
+        for region, region_data in data.get(
+            "dual_register_electricity_tariffs", {}
+        ).items():
+            tariff = self._parse_dual_register_tariff(region_data)
+            if tariff:
+                dual_elec[region] = tariff
+
+        single_gas: dict[str, SingleRegisterTariff] = {}
+        for region, region_data in data.get(
+            "single_register_gas_tariffs", {}
+        ).items():
+            tariff = self._parse_single_register_tariff(region_data)
+            if tariff:
+                single_gas[region] = tariff
+
+        return ProductDetail(
+            code=data["code"],
+            full_name=data["full_name"],
+            display_name=data["display_name"],
+            description=data.get("description", ""),
+            is_variable=data["is_variable"],
+            is_green=data.get("is_green", False),
+            is_tracker=data.get("is_tracker", False),
+            is_prepay=data.get("is_prepay", False),
+            is_restricted=data.get("is_restricted", False),
+            is_business=data.get("is_business", False),
+            brand=data.get("brand", ""),
+            term=data.get("term"),
+            available_from=self._parse_datetime(data.get("available_from")),
+            available_to=self._parse_datetime(data.get("available_to")),
+            single_register_electricity_tariffs=single_elec,
+            dual_register_electricity_tariffs=dual_elec,
+            single_register_gas_tariffs=single_gas,
+        )
 
     async def get_grid_supply_points(
         self, postcode: str

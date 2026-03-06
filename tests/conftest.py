@@ -56,3 +56,9 @@ def grid_supply_points_response() -> dict:
 def products_response() -> dict:
     """Return mock products API response."""
     return json.loads((FIXTURES / "products.json").read_text())
+
+
+@pytest.fixture
+def product_detail_response() -> dict:
+    """Return mock product detail API response."""
+    return json.loads((FIXTURES / "product_detail.json").read_text())

@@ -1,0 +1,89 @@
+{
+  "code": "AGILE-24-10-01",
+  "full_name": "Agile Octopus October 2024 v1",
+  "display_name": "Agile Octopus",
+  "description": "With Agile Octopus, you get access to half-hourly energy prices.",
+  "is_variable": true,
+  "is_green": true,
+  "is_tracker": false,
+  "is_prepay": false,
+  "is_business": false,
+  "is_restricted": false,
+  "brand": "OCTOPUS_ENERGY",
+  "term": 12,
+  "available_from": "2024-10-01T00:00:00+01:00",
+  "available_to": null,
+  "single_register_electricity_tariffs": {
+    "_A": {
+      "direct_debit_monthly": {
+        "code": "E-1R-AGILE-24-10-01-A",
+        "standard_unit_rate_exc_vat": 19.54,
+        "standard_unit_rate_inc_vat": 20.517,
+        "standing_charge_exc_vat": 37.6525,
+        "standing_charge_inc_vat": 39.535125
+      }
+    },
+    "_B": {
+      "direct_debit_monthly": {
+        "code": "E-1R-AGILE-24-10-01-B",
+        "standard_unit_rate_exc_vat": 18.90,
+        "standard_unit_rate_inc_vat": 19.845,
+        "standing_charge_exc_vat": 36.12,
+        "standing_charge_inc_vat": 37.926
+      }
+    },
+    "_C": {
+      "direct_debit_monthly": {
+        "code": "E-1R-AGILE-24-10-01-C",
+        "standard_unit_rate_exc_vat": 20.10,
+        "standard_unit_rate_inc_vat": 21.105,
+        "standing_charge_exc_vat": 38.50,
+        "standing_charge_inc_vat": 40.425
+      }
+    }
+  },
+  "dual_register_electricity_tariffs": {
+    "_A": {
+      "direct_debit_monthly": {
+        "code": "E-2R-AGILE-24-10-01-A",
+        "day_unit_rate_exc_vat": 28.55,
+        "day_unit_rate_inc_vat": 29.9775,
+        "night_unit_rate_exc_vat": 7.5,
+        "night_unit_rate_inc_vat": 7.875,
+        "standing_charge_exc_vat": 37.6525,
+        "standing_charge_inc_vat": 39.535125
+      }
+    },
+    "_C": {
+      "direct_debit_monthly": {
+        "code": "E-2R-AGILE-24-10-01-C",
+        "day_unit_rate_exc_vat": 29.10,
+        "day_unit_rate_inc_vat": 30.555,
+        "night_unit_rate_exc_vat": 8.0,
+        "night_unit_rate_inc_vat": 8.4,
+        "standing_charge_exc_vat": 38.50,
+        "standing_charge_inc_vat": 40.425
+      }
+    }
+  },
+  "single_register_gas_tariffs": {
+    "_A": {
+      "direct_debit_monthly": {
+        "code": "G-1R-AGILE-24-10-01-A",
+        "standard_unit_rate_exc_vat": 6.76,
+        "standard_unit_rate_inc_vat": 7.098,
+        "standing_charge_exc_vat": 29.85,
+        "standing_charge_inc_vat": 31.3425
+      }
+    },
+    "_B": {
+      "direct_debit_monthly": {
+        "code": "G-1R-AGILE-24-10-01-B",
+        "standard_unit_rate_exc_vat": 6.50,
+        "standard_unit_rate_inc_vat": 6.825,
+        "standing_charge_exc_vat": 28.10,
+        "standing_charge_inc_vat": 29.505
+      }
+    }
+  }
+}
