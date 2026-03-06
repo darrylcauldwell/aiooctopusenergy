@@ -1,0 +1,27 @@
+{
+  "count": 4,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "consumption": 0.234,
+      "interval_start": "2026-03-05T23:30:00Z",
+      "interval_end": "2026-03-06T00:00:00Z"
+    },
+    {
+      "consumption": 0.456,
+      "interval_start": "2026-03-05T23:00:00Z",
+      "interval_end": "2026-03-05T23:30:00Z"
+    },
+    {
+      "consumption": 0.789,
+      "interval_start": "2026-03-05T22:30:00Z",
+      "interval_end": "2026-03-05T23:00:00Z"
+    },
+    {
+      "consumption": 0.123,
+      "interval_start": "2026-03-05T22:00:00Z",
+      "interval_end": "2026-03-05T22:30:00Z"
+    }
+  ]
+}

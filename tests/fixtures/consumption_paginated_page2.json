@@ -1,0 +1,17 @@
+{
+  "count": 4,
+  "next": null,
+  "previous": "https://api.octopus.energy/v1/electricity-meter-points/1100009640372/meters/22L4344979/consumption/?page=1&page_size=2",
+  "results": [
+    {
+      "consumption": 0.789,
+      "interval_start": "2026-03-05T22:30:00Z",
+      "interval_end": "2026-03-05T23:00:00Z"
+    },
+    {
+      "consumption": 0.123,
+      "interval_start": "2026-03-05T22:00:00Z",
+      "interval_end": "2026-03-05T22:30:00Z"
+    }
+  ]
+}

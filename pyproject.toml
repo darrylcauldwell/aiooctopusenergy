@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aiooctopusenergy"
+version = "0.1.0"
+description = "Async Python client for the Octopus Energy REST API"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+authors = [
+    { name = "Darryl Cauldwell", email = "darryl.cauldwell@outlook.com" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Home Automation",
+]
+dependencies = ["aiohttp>=3.0.0"]
+
+[project.urls]
+Homepage = "https://github.com/darrylcauldwell/aiooctopusenergy"
+Repository = "https://github.com/darrylcauldwell/aiooctopusenergy"
+Issues = "https://github.com/darrylcauldwell/aiooctopusenergy/issues"
+
+[tool.setuptools.packages.find]
+include = ["aiooctopusenergy*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "aioresponses>=0.7"]
