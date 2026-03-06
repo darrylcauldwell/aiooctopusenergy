@@ -1,6 +1,7 @@
-"""Async Python client for the Octopus Energy REST API."""
+"""Async Python client for the Octopus Energy REST and GraphQL APIs."""
 
 from .client import OctopusEnergyClient
+from .graphql_client import OctopusEnergyGraphQLClient
 from .exceptions import (
     OctopusEnergyAuthenticationError,
     OctopusEnergyConnectionError,
@@ -37,6 +38,7 @@ __all__ = [
     "OctopusEnergyAuthenticationError",
     "OctopusEnergyClient",
     "OctopusEnergyConnectionError",
+    "OctopusEnergyGraphQLClient",
     "OctopusEnergyError",
     "OctopusEnergyNotFoundError",
     "OctopusEnergyTimeoutError",
