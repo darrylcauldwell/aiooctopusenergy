@@ -35,6 +35,18 @@ from .models import (
 REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=10)
 
 
+def _format_datetime(dt: datetime) -> str:
+    """Format a datetime for use in API URL parameters.
+
+    The Octopus Energy API rejects '+00:00' in URL query params because
+    the '+' is interpreted as a space. Use 'Z' suffix for UTC instead.
+    """
+    iso = dt.isoformat()
+    if iso.endswith("+00:00"):
+        return iso[:-6] + "Z"
+    return iso
+
+
 class OctopusEnergyClient:
     """Async client for the Octopus Energy REST API.
 
@@ -115,9 +127,9 @@ class OctopusEnergyClient:
         """Fetch all pages from a paginated endpoint."""
         params: list[str] = [f"page_size={page_size}"]
         if period_from:
-            params.append(f"period_from={period_from.isoformat()}")
+            params.append(f"period_from={_format_datetime(period_from)}")
         if period_to:
-            params.append(f"period_to={period_to.isoformat()}")
+            params.append(f"period_to={_format_datetime(period_to)}")
         if extra_params:
             for key, value in extra_params.items():
                 params.append(f"{key}={value}")
@@ -695,7 +707,7 @@ class OctopusEnergyClient:
         if brand is not None:
             params.append(f"brand={brand}")
         if available_at is not None:
-            params.append(f"available_at={available_at.isoformat()}")
+            params.append(f"available_at={_format_datetime(available_at)}")
 
         query = f"?{'&'.join(params)}" if params else ""
         data = await self._get(f"/v1/products/{query}", auth=False)

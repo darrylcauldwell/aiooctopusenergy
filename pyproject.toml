@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aiooctopusenergy"
-version = "0.4.0"
+version = "0.4.1"
 description = "Async Python client for the Octopus Energy REST and GraphQL APIs"
 readme = "README.md"
 license = "MIT"
