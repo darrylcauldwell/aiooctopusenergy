@@ -1,0 +1,58 @@
+{
+  "count": 3,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "code": "AGILE-24-10-01",
+      "direction": "IMPORT",
+      "full_name": "Agile Octopus October 2024 v1",
+      "display_name": "Agile Octopus",
+      "description": "With Agile Octopus, you get access to half-hourly energy prices.",
+      "is_variable": true,
+      "is_green": true,
+      "is_tracker": false,
+      "is_prepay": false,
+      "is_business": false,
+      "is_restricted": false,
+      "term": 12,
+      "available_from": "2024-10-01T00:00:00+01:00",
+      "available_to": null,
+      "brand": "OCTOPUS_ENERGY"
+    },
+    {
+      "code": "VAR-22-11-01",
+      "direction": "IMPORT",
+      "full_name": "Flexible Octopus November 2022 v1",
+      "display_name": "Flexible Octopus",
+      "description": "Our standard variable tariff with no exit fees.",
+      "is_variable": true,
+      "is_green": true,
+      "is_tracker": false,
+      "is_prepay": false,
+      "is_business": false,
+      "is_restricted": false,
+      "term": null,
+      "available_from": "2022-11-01T00:00:00+00:00",
+      "available_to": null,
+      "brand": "OCTOPUS_ENERGY"
+    },
+    {
+      "code": "GO-VAR-22-10-14",
+      "direction": "IMPORT",
+      "full_name": "Octopus Go October 2022 v1",
+      "display_name": "Octopus Go",
+      "description": "Octopus Go gives you cheap energy between 00:30 and 05:30.",
+      "is_variable": true,
+      "is_green": true,
+      "is_tracker": false,
+      "is_prepay": false,
+      "is_business": false,
+      "is_restricted": false,
+      "term": 12,
+      "available_from": "2022-10-14T00:00:00+01:00",
+      "available_to": null,
+      "brand": "OCTOPUS_ENERGY"
+    }
+  ]
+}

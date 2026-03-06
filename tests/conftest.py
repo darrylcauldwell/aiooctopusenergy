@@ -50,3 +50,9 @@ def standing_charges_response() -> dict:
 def grid_supply_points_response() -> dict:
     """Return mock GSP API response."""
     return json.loads((FIXTURES / "grid_supply_points.json").read_text())
+
+
+@pytest.fixture
+def products_response() -> dict:
+    """Return mock products API response."""
+    return json.loads((FIXTURES / "products.json").read_text())

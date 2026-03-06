@@ -23,6 +23,7 @@ from .models import (
     GasMeterPoint,
     GridSupplyPoint,
     Meter,
+    Product,
     Property,
     Rate,
     StandingCharge,
@@ -458,6 +459,41 @@ class OctopusEnergyClient:
                 valid_to=self._parse_datetime(r.get("valid_to")),
             )
             for r in results
+        ]
+
+    async def get_products(
+        self,
+        *,
+        is_variable: bool | None = None,
+        is_business: bool = False,
+    ) -> list[Product]:
+        """Get available energy products.
+
+        Args:
+            is_variable: Filter by variable/fixed. None returns all.
+            is_business: Include business products. Defaults to False.
+
+        Returns:
+            List of available products.
+        """
+        params: list[str] = []
+        if is_variable is not None:
+            params.append(f"is_variable={'true' if is_variable else 'false'}")
+        if not is_business:
+            params.append("is_business=false")
+
+        query = f"?{'&'.join(params)}" if params else ""
+        data = await self._get(f"/v1/products/{query}", auth=False)
+        return [
+            Product(
+                code=r["code"],
+                full_name=r["full_name"],
+                display_name=r["display_name"],
+                description=r.get("description", ""),
+                is_variable=r["is_variable"],
+                brand=r["brand"],
+            )
+            for r in data.get("results", [])
         ]
 
     async def get_grid_supply_points(

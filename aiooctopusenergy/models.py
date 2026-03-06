@@ -7,6 +7,18 @@ from datetime import datetime
 
 
 @dataclass(frozen=True)
+class Product:
+    """An Octopus Energy product (tariff)."""
+
+    code: str
+    full_name: str
+    display_name: str
+    description: str
+    is_variable: bool
+    brand: str
+
+
+@dataclass(frozen=True)
 class GridSupplyPoint:
     """A Grid Supply Point region."""
 
