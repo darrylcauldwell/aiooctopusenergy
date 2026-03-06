@@ -14,6 +14,7 @@ from .exceptions import (
     OctopusEnergyError,
     OctopusEnergyTimeoutError,
 )
+from .models import ApplicableRate, SolarEstimate, TariffCostComparison
 
 REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=30)
 
@@ -182,3 +183,184 @@ class OctopusEnergyGraphQLClient:
         except aiohttp.ClientError as err:
             msg = f"Error connecting to {GRAPHQL_URL}"
             raise OctopusEnergyConnectionError(msg) from err
+
+    @staticmethod
+    def _parse_datetime(value: str) -> datetime:
+        """Parse an ISO datetime string."""
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+    async def get_applicable_rates(
+        self,
+        account_number: str,
+        mpxn: str,
+        *,
+        start_at: datetime,
+        end_at: datetime,
+    ) -> list[ApplicableRate]:
+        """Get actual rates applied to a meter.
+
+        Uses Relay pagination (edges/nodes) internally.
+
+        Args:
+            account_number: Octopus Energy account number.
+            mpxn: MPAN or MPRN.
+            start_at: Start of period.
+            end_at: End of period.
+
+        Returns:
+            Flat list of applicable rates.
+        """
+        query = """
+        query applicableRates(
+            $accountNumber: String!,
+            $mpxn: String!,
+            $startAt: DateTime!,
+            $endAt: DateTime!,
+            $cursor: String
+        ) {
+          applicableRates(
+            accountNumber: $accountNumber,
+            mpxn: $mpxn,
+            startAt: $startAt,
+            endAt: $endAt,
+            after: $cursor
+          ) {
+            edges {
+              node {
+                valueIncVat
+                validFrom
+                validTo
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+        """
+        all_rates: list[ApplicableRate] = []
+        cursor: str | None = None
+
+        while True:
+            variables: dict[str, Any] = {
+                "accountNumber": account_number,
+                "mpxn": mpxn,
+                "startAt": start_at.isoformat(),
+                "endAt": end_at.isoformat(),
+            }
+            if cursor:
+                variables["cursor"] = cursor
+
+            data = await self._execute(query, variables=variables)
+            rates_data = data["applicableRates"]
+
+            for edge in rates_data.get("edges", []):
+                node = edge["node"]
+                all_rates.append(
+                    ApplicableRate(
+                        value_inc_vat=node["valueIncVat"],
+                        valid_from=self._parse_datetime(node["validFrom"]),
+                        valid_to=self._parse_datetime(node["validTo"]),
+                    )
+                )
+
+            page_info = rates_data.get("pageInfo", {})
+            if page_info.get("hasNextPage"):
+                cursor = page_info["endCursor"]
+            else:
+                break
+
+        return all_rates
+
+    async def get_solar_generation_estimate(
+        self,
+        postcode: str,
+        *,
+        from_date: datetime | None = None,
+    ) -> list[SolarEstimate]:
+        """Get hourly solar generation estimates for a postcode.
+
+        Args:
+            postcode: UK postcode.
+            from_date: Start date for estimates.
+
+        Returns:
+            List of hourly solar generation estimates in kWh.
+        """
+        query = """
+        query getSolarEstimate($postcode: String!, $fromDate: DateTime) {
+          getSolarGenerationEstimate(postcode: $postcode, fromDate: $fromDate) {
+            date
+            hour
+            value
+          }
+        }
+        """
+        variables: dict[str, Any] = {"postcode": postcode}
+        if from_date:
+            variables["fromDate"] = from_date.isoformat()
+
+        data = await self._execute(query, variables=variables)
+        return [
+            SolarEstimate(
+                date=item["date"],
+                hour=item["hour"],
+                value=item["value"],
+            )
+            for item in data.get("getSolarGenerationEstimate", [])
+        ]
+
+    async def get_smart_tariff_comparison(
+        self,
+        *,
+        account_number: str,
+        mpan: str | None = None,
+    ) -> dict:
+        """Get tariff cost comparison from Octopus.
+
+        Args:
+            account_number: Octopus Energy account number.
+            mpan: Optional MPAN to compare for.
+
+        Returns:
+            Dict with 'current_cost' and 'comparisons' list.
+        """
+        query = """
+        query smartTariffComparison(
+            $accountNumber: String!,
+            $mpan: String
+        ) {
+          smartTariffComparison(
+            accountNumber: $accountNumber,
+            mpan: $mpan
+          ) {
+            currentCost
+            comparisons {
+              tariffCode
+              productCode
+              costIncVat
+            }
+          }
+        }
+        """
+        variables: dict[str, Any] = {"accountNumber": account_number}
+        if mpan:
+            variables["mpan"] = mpan
+
+        data = await self._execute(query, variables=variables)
+        result = data["smartTariffComparison"]
+
+        comparisons = [
+            TariffCostComparison(
+                tariff_code=c["tariffCode"],
+                product_code=c["productCode"],
+                cost_inc_vat=c["costIncVat"],
+            )
+            for c in result.get("comparisons", [])
+        ]
+
+        return {
+            "current_cost": result.get("currentCost"),
+            "comparisons": comparisons,
+        }

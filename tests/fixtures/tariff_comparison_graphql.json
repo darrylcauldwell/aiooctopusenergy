@@ -1,0 +1,24 @@
+{
+  "data": {
+    "smartTariffComparison": {
+      "currentCost": 125.50,
+      "comparisons": [
+        {
+          "tariffCode": "E-1R-AGILE-24-10-01-C",
+          "productCode": "AGILE-24-10-01",
+          "costIncVat": 110.25
+        },
+        {
+          "tariffCode": "E-1R-GO-VAR-22-10-14-C",
+          "productCode": "GO-VAR-22-10-14",
+          "costIncVat": 98.75
+        },
+        {
+          "tariffCode": "E-1R-VAR-22-11-01-C",
+          "productCode": "VAR-22-11-01",
+          "costIncVat": 130.00
+        }
+      ]
+    }
+  }
+}

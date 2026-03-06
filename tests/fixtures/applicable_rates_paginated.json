@@ -1,0 +1,19 @@
+{
+  "data": {
+    "applicableRates": {
+      "edges": [
+        {
+          "node": {
+            "valueIncVat": 18.50,
+            "validFrom": "2026-03-06T20:30:00Z",
+            "validTo": "2026-03-06T21:00:00Z"
+          }
+        }
+      ],
+      "pageInfo": {
+        "hasNextPage": true,
+        "endCursor": "cursor-page-1"
+      }
+    }
+  }
+}

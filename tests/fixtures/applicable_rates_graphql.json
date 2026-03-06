@@ -1,0 +1,33 @@
+{
+  "data": {
+    "applicableRates": {
+      "edges": [
+        {
+          "node": {
+            "valueIncVat": 20.517,
+            "validFrom": "2026-03-06T22:30:00Z",
+            "validTo": "2026-03-06T23:00:00Z"
+          }
+        },
+        {
+          "node": {
+            "valueIncVat": 22.05,
+            "validFrom": "2026-03-06T22:00:00Z",
+            "validTo": "2026-03-06T22:30:00Z"
+          }
+        },
+        {
+          "node": {
+            "valueIncVat": 16.065,
+            "validFrom": "2026-03-06T21:30:00Z",
+            "validTo": "2026-03-06T22:00:00Z"
+          }
+        }
+      ],
+      "pageInfo": {
+        "hasNextPage": false,
+        "endCursor": null
+      }
+    }
+  }
+}

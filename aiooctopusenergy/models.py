@@ -7,6 +7,33 @@ from datetime import datetime
 
 
 @dataclass(frozen=True)
+class ApplicableRate:
+    """An actual rate applied to a meter from GraphQL applicableRates."""
+
+    value_inc_vat: float
+    valid_from: datetime
+    valid_to: datetime
+
+
+@dataclass(frozen=True)
+class SolarEstimate:
+    """An hourly solar generation estimate from GraphQL."""
+
+    date: str
+    hour: int
+    value: float
+
+
+@dataclass(frozen=True)
+class TariffCostComparison:
+    """A tariff cost comparison result from GraphQL."""
+
+    tariff_code: str
+    product_code: str
+    cost_inc_vat: float
+
+
+@dataclass(frozen=True)
 class SingleRegisterTariff:
     """A single-register tariff for a specific region and payment method."""
 

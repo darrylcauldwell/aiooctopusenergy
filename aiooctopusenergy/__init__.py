@@ -12,6 +12,7 @@ from .exceptions import (
 from .models import (
     Account,
     Agreement,
+    ApplicableRate,
     Consumption,
     DualRegisterTariff,
     ElectricityMeterPoint,
@@ -23,12 +24,15 @@ from .models import (
     Property,
     Rate,
     SingleRegisterTariff,
+    SolarEstimate,
     StandingCharge,
+    TariffCostComparison,
 )
 
 __all__ = [
     "Account",
     "Agreement",
+    "ApplicableRate",
     "Consumption",
     "DualRegisterTariff",
     "ElectricityMeterPoint",
@@ -47,5 +51,7 @@ __all__ = [
     "Property",
     "Rate",
     "SingleRegisterTariff",
+    "SolarEstimate",
     "StandingCharge",
+    "TariffCostComparison",
 ]

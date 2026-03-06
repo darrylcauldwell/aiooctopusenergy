@@ -80,3 +80,33 @@ def products_response() -> dict:
 def product_detail_response() -> dict:
     """Return mock product detail API response."""
     return json.loads((FIXTURES / "product_detail.json").read_text())
+
+
+@pytest.fixture
+def applicable_rates_graphql_response() -> dict:
+    """Return mock GraphQL applicable rates response."""
+    return json.loads((FIXTURES / "applicable_rates_graphql.json").read_text())
+
+
+@pytest.fixture
+def applicable_rates_paginated_response() -> dict:
+    """Return mock GraphQL applicable rates page 1."""
+    return json.loads((FIXTURES / "applicable_rates_paginated.json").read_text())
+
+
+@pytest.fixture
+def applicable_rates_page2_response() -> dict:
+    """Return mock GraphQL applicable rates page 2."""
+    return json.loads((FIXTURES / "applicable_rates_page2.json").read_text())
+
+
+@pytest.fixture
+def solar_estimate_graphql_response() -> dict:
+    """Return mock GraphQL solar estimate response."""
+    return json.loads((FIXTURES / "solar_estimate_graphql.json").read_text())
+
+
+@pytest.fixture
+def tariff_comparison_graphql_response() -> dict:
+    """Return mock GraphQL tariff comparison response."""
+    return json.loads((FIXTURES / "tariff_comparison_graphql.json").read_text())
