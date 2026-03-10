@@ -185,8 +185,10 @@ class OctopusEnergyGraphQLClient:
             raise OctopusEnergyConnectionError(msg) from err
 
     @staticmethod
-    def _parse_datetime(value: str) -> datetime:
+    def _parse_datetime(value: str | None) -> datetime | None:
         """Parse an ISO datetime string."""
+        if value is None:
+            return None
         return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
     async def get_applicable_rates(
@@ -283,32 +285,34 @@ class OctopusEnergyGraphQLClient:
 
         Args:
             postcode: UK postcode.
-            from_date: Start date for estimates.
+            from_date: Start date for estimates. Defaults to today.
 
         Returns:
             List of hourly solar generation estimates in kWh.
         """
         query = """
-        query getSolarEstimate($postcode: String!, $fromDate: DateTime) {
+        query getSolarEstimate($postcode: String!, $fromDate: Date!) {
           getSolarGenerationEstimate(postcode: $postcode, fromDate: $fromDate) {
-            date
-            hour
-            value
+            solarGenerationEstimates {
+              date
+              hour
+              value
+            }
           }
         }
         """
-        variables: dict[str, Any] = {"postcode": postcode}
-        if from_date:
-            variables["fromDate"] = from_date.isoformat()
+        date_str = (from_date or datetime.now(UTC)).strftime("%Y-%m-%d")
+        variables: dict[str, Any] = {"postcode": postcode, "fromDate": date_str}
 
         data = await self._execute(query, variables=variables)
+        container = data.get("getSolarGenerationEstimate") or {}
         return [
             SolarEstimate(
                 date=item["date"],
                 hour=item["hour"],
                 value=item["value"],
             )
-            for item in data.get("getSolarGenerationEstimate", [])
+            for item in container.get("solarGenerationEstimates", [])
         ]
 
     async def get_smart_tariff_comparison(

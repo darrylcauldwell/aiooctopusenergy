@@ -7,6 +7,7 @@ from .exceptions import (
     OctopusEnergyConnectionError,
     OctopusEnergyError,
     OctopusEnergyNotFoundError,
+    OctopusEnergyRateLimitError,
     OctopusEnergyTimeoutError,
 )
 from .models import (
@@ -45,6 +46,7 @@ __all__ = [
     "OctopusEnergyGraphQLClient",
     "OctopusEnergyError",
     "OctopusEnergyNotFoundError",
+    "OctopusEnergyRateLimitError",
     "OctopusEnergyTimeoutError",
     "Product",
     "ProductDetail",

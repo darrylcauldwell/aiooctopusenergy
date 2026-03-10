@@ -171,7 +171,7 @@ class TestGetSolarGenerationEstimate:
 
     @pytest.mark.asyncio
     async def test_empty_results(self, mock_session, token_response):
-        empty = {"data": {"getSolarGenerationEstimate": []}}
+        empty = {"data": {"getSolarGenerationEstimate": {"solarGenerationEstimates": []}}}
         mock_session.post = MagicMock(
             side_effect=[
                 _mock_post_response(token_response),

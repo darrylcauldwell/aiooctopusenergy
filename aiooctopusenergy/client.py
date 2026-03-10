@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime
 from typing import Self
 
@@ -13,6 +14,7 @@ from .exceptions import (
     OctopusEnergyConnectionError,
     OctopusEnergyError,
     OctopusEnergyNotFoundError,
+    OctopusEnergyRateLimitError,
     OctopusEnergyTimeoutError,
 )
 from .models import (
@@ -101,11 +103,18 @@ class OctopusEnergyClient:
                 if resp.status == 404:
                     msg = f"Resource not found: {path}"
                     raise OctopusEnergyNotFoundError(msg)
+                if resp.status == 429:
+                    msg = f"Rate limited: {path}"
+                    raise OctopusEnergyRateLimitError(msg)
                 if resp.status != 200:
                     msg = f"API returned status {resp.status}"
                     raise OctopusEnergyError(msg)
                 return await resp.json()
-        except (OctopusEnergyAuthenticationError, OctopusEnergyNotFoundError):
+        except (
+            OctopusEnergyAuthenticationError,
+            OctopusEnergyNotFoundError,
+            OctopusEnergyRateLimitError,
+        ):
             raise
         except TimeoutError as err:
             msg = f"Timeout connecting to {url}"
@@ -123,8 +132,15 @@ class OctopusEnergyClient:
         period_from: datetime | None = None,
         period_to: datetime | None = None,
         extra_params: dict[str, str] | None = None,
+        page_delay: float = 0.0,
     ) -> list[dict]:
-        """Fetch all pages from a paginated endpoint."""
+        """Fetch all pages from a paginated endpoint.
+
+        Args:
+            page_delay: Seconds to wait between consecutive page fetches.
+                        Useful for avoiding per-endpoint rate limits on
+                        large historical queries.
+        """
         params: list[str] = [f"page_size={page_size}"]
         if period_from:
             params.append(f"period_from={_format_datetime(period_from)}")
@@ -138,7 +154,10 @@ class OctopusEnergyClient:
         url = f"{path}{separator}{'&'.join(params)}"
 
         all_results: list[dict] = []
+        page_count = 0
         while url:
+            if page_count > 0 and page_delay > 0:
+                await asyncio.sleep(page_delay)
             data = await self._get(url, auth=auth)
             all_results.extend(data.get("results", []))
             next_url = data.get("next")
@@ -146,6 +165,7 @@ class OctopusEnergyClient:
                 url = next_url[len(BASE_URL) :]
             else:
                 url = ""
+            page_count += 1
 
         return all_results
 
@@ -242,6 +262,7 @@ class OctopusEnergyClient:
         page_size: int = DEFAULT_PAGE_SIZE,
         group_by: str | None = None,
         order_by: str | None = None,
+        page_delay: float = 0.0,
     ) -> list[Consumption]:
         """Get electricity consumption readings.
 
@@ -253,6 +274,7 @@ class OctopusEnergyClient:
             page_size: Number of results per page.
             group_by: Aggregate by period: "day", "week", "month", "quarter".
             order_by: Sort order: "period" for ascending.
+            page_delay: Seconds to wait between pagination requests.
 
         Returns:
             List of consumption readings.
@@ -272,6 +294,7 @@ class OctopusEnergyClient:
             period_from=period_from,
             period_to=period_to,
             extra_params=extra if extra else None,
+            page_delay=page_delay,
         )
         return [
             Consumption(
@@ -280,6 +303,7 @@ class OctopusEnergyClient:
                 interval_end=self._require_datetime(r["interval_end"]),
             )
             for r in results
+            if r.get("interval_start") is not None
         ]
 
     async def get_gas_consumption(
@@ -330,6 +354,7 @@ class OctopusEnergyClient:
                 interval_end=self._require_datetime(r["interval_end"]),
             )
             for r in results
+            if r.get("interval_start") is not None
         ]
 
     async def get_electricity_rates(
@@ -372,6 +397,7 @@ class OctopusEnergyClient:
                 valid_to=self._parse_datetime(r.get("valid_to")),
             )
             for r in results
+            if r.get("valid_from") is not None
         ]
 
     async def get_electricity_standing_charges(
@@ -414,6 +440,7 @@ class OctopusEnergyClient:
                 valid_to=self._parse_datetime(r.get("valid_to")),
             )
             for r in results
+            if r.get("valid_from") is not None
         ]
 
     async def get_gas_rates(
@@ -456,6 +483,7 @@ class OctopusEnergyClient:
                 valid_to=self._parse_datetime(r.get("valid_to")),
             )
             for r in results
+            if r.get("valid_from") is not None
         ]
 
     async def get_gas_standing_charges(
@@ -498,6 +526,7 @@ class OctopusEnergyClient:
                 valid_to=self._parse_datetime(r.get("valid_to")),
             )
             for r in results
+            if r.get("valid_from") is not None
         ]
 
     async def get_electricity_day_rates(
@@ -540,6 +569,7 @@ class OctopusEnergyClient:
                 valid_to=self._parse_datetime(r.get("valid_to")),
             )
             for r in results
+            if r.get("valid_from") is not None
         ]
 
     async def get_electricity_night_rates(
@@ -582,6 +612,7 @@ class OctopusEnergyClient:
                 valid_to=self._parse_datetime(r.get("valid_to")),
             )
             for r in results
+            if r.get("valid_from") is not None
         ]
 
     async def get_gas_day_rates(
@@ -624,6 +655,7 @@ class OctopusEnergyClient:
                 valid_to=self._parse_datetime(r.get("valid_to")),
             )
             for r in results
+            if r.get("valid_from") is not None
         ]
 
     async def get_gas_night_rates(
@@ -666,6 +698,7 @@ class OctopusEnergyClient:
                 valid_to=self._parse_datetime(r.get("valid_to")),
             )
             for r in results
+            if r.get("valid_from") is not None
         ]
 
     async def get_products(

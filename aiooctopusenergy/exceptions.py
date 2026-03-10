@@ -13,6 +13,10 @@ class OctopusEnergyNotFoundError(OctopusEnergyError):
     """Raised when the requested resource is not found."""
 
 
+class OctopusEnergyRateLimitError(OctopusEnergyError):
+    """Raised when the API returns HTTP 429 (Too Many Requests)."""
+
+
 class OctopusEnergyConnectionError(OctopusEnergyError):
     """Raised when unable to connect to the API."""
 
