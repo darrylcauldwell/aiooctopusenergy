@@ -49,7 +49,7 @@ async with aiohttp.ClientSession() as session:
 ### GraphQL client
 
 ```python
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from aiooctopusenergy import OctopusEnergyGraphQLClient
 
 async with aiohttp.ClientSession() as session:
@@ -74,6 +74,14 @@ async with aiohttp.ClientSession() as session:
     print(f"Current cost: £{comparison['current_cost']}")
     for c in comparison["comparisons"]:
         print(f"  {c.product_code}: £{c.cost_inc_vat}")
+
+    # Live readings from an Octopus Home Mini
+    devices = await gql.get_smart_meter_devices("A-AAAA1111")
+    end = datetime.now(UTC)
+    readings = await gql.get_smart_meter_telemetry(
+        devices[0].device_id, start=end - timedelta(minutes=2), end=end
+    )
+    print(f"Demand now: {readings[-1].demand_w} W")
 ```
 
 ## API Reference
@@ -102,6 +110,8 @@ GraphQL client with JWT authentication. Can be used as an async context manager.
 - `get_applicable_rates(account_number, mpxn, *, start_at, end_at)` — Actual rates applied to a meter (Relay-paginated)
 - `get_solar_generation_estimate(postcode, *, from_date)` — Hourly solar generation estimates
 - `get_smart_tariff_comparison(*, account_number, mpan)` — Tariff cost comparison
+- `get_smart_meter_devices(account_number)` — Active smart import electricity meters and their device IDs
+- `get_smart_meter_telemetry(device_id, *, start, end, grouping)` — Home Mini readings (demand in W, consumption in kWh); `grouping` is one of `TEN_SECONDS`, `ONE_MINUTE`, `FIVE_MINUTES`, `HALF_HOURLY`, `HOURLY`
 
 ### Exceptions
 

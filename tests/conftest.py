@@ -110,3 +110,15 @@ def solar_estimate_graphql_response() -> dict:
 def tariff_comparison_graphql_response() -> dict:
     """Return mock GraphQL tariff comparison response."""
     return json.loads((FIXTURES / "tariff_comparison_graphql.json").read_text())
+
+
+@pytest.fixture
+def smart_meter_devices_graphql_response() -> dict:
+    """Return mock GraphQL smart meter devices response."""
+    return json.loads((FIXTURES / "smart_meter_devices_graphql.json").read_text())
+
+
+@pytest.fixture
+def smart_meter_telemetry_graphql_response() -> dict:
+    """Return mock GraphQL smart meter telemetry response."""
+    return json.loads((FIXTURES / "smart_meter_telemetry_graphql.json").read_text())

@@ -11,6 +11,8 @@ import pytest
 from aiooctopusenergy import (
     ApplicableRate,
     OctopusEnergyGraphQLClient,
+    SmartMeterDevice,
+    SmartMeterTelemetry,
     SolarEstimate,
     TariffCostComparison,
 )
@@ -242,3 +244,152 @@ class TestGetSmartTariffComparison:
         query_call = mock_session.post.call_args_list[1]
         variables = query_call.kwargs["json"]["variables"]
         assert variables["mpan"] == "1100009640372"
+
+
+class TestGetSmartMeterDevices:
+    @pytest.mark.asyncio
+    async def test_success_skips_meters_without_a_smart_device(
+        self,
+        mock_session,
+        token_response,
+        smart_meter_devices_graphql_response,
+    ):
+        mock_session.post = MagicMock(
+            side_effect=[
+                _mock_post_response(token_response),
+                _mock_post_response(smart_meter_devices_graphql_response),
+            ]
+        )
+        client = OctopusEnergyGraphQLClient(
+            api_key="sk_live_test", session=mock_session
+        )
+
+        result = await client.get_smart_meter_devices("A-AAAA1111")
+
+        assert result == [
+            SmartMeterDevice(
+                mpan="1100009640372",
+                serial_number="22L4344979",
+                device_id="00-11-22-33-44-55-66-77",
+            )
+        ]
+        variables = mock_session.post.call_args_list[1].kwargs["json"]["variables"]
+        assert variables == {"accountNumber": "A-AAAA1111"}
+
+    @pytest.mark.asyncio
+    async def test_no_account(self, mock_session, token_response):
+        mock_session.post = MagicMock(
+            side_effect=[
+                _mock_post_response(token_response),
+                _mock_post_response({"data": {"account": None}}),
+            ]
+        )
+        client = OctopusEnergyGraphQLClient(
+            api_key="sk_live_test", session=mock_session
+        )
+
+        assert await client.get_smart_meter_devices("A-AAAA1111") == []
+
+
+class TestGetSmartMeterTelemetry:
+    @pytest.mark.asyncio
+    async def test_success_converts_units(
+        self,
+        mock_session,
+        token_response,
+        smart_meter_telemetry_graphql_response,
+    ):
+        mock_session.post = MagicMock(
+            side_effect=[
+                _mock_post_response(token_response),
+                _mock_post_response(smart_meter_telemetry_graphql_response),
+            ]
+        )
+        client = OctopusEnergyGraphQLClient(
+            api_key="sk_live_test", session=mock_session
+        )
+
+        result = await client.get_smart_meter_telemetry(
+            "00-11-22-33-44-55-66-77",
+            start=datetime(2026, 11, 9, 8, 9, tzinfo=UTC),
+            end=datetime(2026, 11, 9, 8, 10, tzinfo=UTC),
+        )
+
+        assert len(result) == 3
+        assert all(isinstance(r, SmartMeterTelemetry) for r in result)
+        assert result[1].read_at == datetime(2026, 11, 9, 8, 9, 40, tzinfo=UTC)
+        assert result[1].consumption_kwh == pytest.approx(11326.045)
+        assert result[1].demand_w == pytest.approx(1843.5)
+        assert result[1].consumption_delta_kwh == pytest.approx(0.025)
+        assert result[0].demand_w == 0.0
+
+    @pytest.mark.asyncio
+    async def test_null_values_become_none(
+        self,
+        mock_session,
+        token_response,
+        smart_meter_telemetry_graphql_response,
+    ):
+        mock_session.post = MagicMock(
+            side_effect=[
+                _mock_post_response(token_response),
+                _mock_post_response(smart_meter_telemetry_graphql_response),
+            ]
+        )
+        client = OctopusEnergyGraphQLClient(
+            api_key="sk_live_test", session=mock_session
+        )
+
+        result = await client.get_smart_meter_telemetry(
+            "00-11-22-33-44-55-66-77",
+            start=datetime(2026, 11, 9, 8, 9, tzinfo=UTC),
+            end=datetime(2026, 11, 9, 8, 10, tzinfo=UTC),
+        )
+
+        assert result[2].consumption_kwh is None
+        assert result[2].demand_w is None
+        assert result[2].consumption_delta_kwh is None
+
+    @pytest.mark.asyncio
+    async def test_grouping_and_window_are_sent(self, mock_session, token_response):
+        mock_session.post = MagicMock(
+            side_effect=[
+                _mock_post_response(token_response),
+                _mock_post_response({"data": {"smartMeterTelemetry": None}}),
+            ]
+        )
+        client = OctopusEnergyGraphQLClient(
+            api_key="sk_live_test", session=mock_session
+        )
+        start = datetime(2026, 11, 9, 0, 0, tzinfo=UTC)
+        end = datetime(2026, 11, 9, 8, 0, tzinfo=UTC)
+
+        result = await client.get_smart_meter_telemetry(
+            "00-11", start=start, end=end, grouping="HALF_HOURLY"
+        )
+
+        assert result == []
+        payload = mock_session.post.call_args_list[1].kwargs["json"]
+        assert payload["variables"] == {
+            "deviceId": "00-11",
+            "grouping": "HALF_HOURLY",
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+        }
+
+    @pytest.mark.asyncio
+    async def test_unknown_grouping_rejected_before_any_request(self, mock_session):
+        mock_session.post = MagicMock()
+        client = OctopusEnergyGraphQLClient(
+            api_key="sk_live_test", session=mock_session
+        )
+
+        with pytest.raises(ValueError):
+            await client.get_smart_meter_telemetry(
+                "00-11",
+                start=datetime(2026, 11, 9, tzinfo=UTC),
+                end=datetime(2026, 11, 9, 1, tzinfo=UTC),
+                grouping="TEN_MINUTES",
+            )
+        mock_session.post.assert_not_called()
+

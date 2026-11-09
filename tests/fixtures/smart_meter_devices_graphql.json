@@ -1,0 +1,25 @@
+{
+  "data": {
+    "account": {
+      "electricityAgreements": [
+        {
+          "meterPoint": {
+            "mpan": "1100009640372",
+            "meters": [
+              {"serialNumber": "22L4344979", "smartImportElectricityMeter": {"deviceId": "00-11-22-33-44-55-66-77"}},
+              {"serialNumber": "OLD0000001", "smartImportElectricityMeter": null}
+            ]
+          }
+        },
+        {
+          "meterPoint": {
+            "mpan": "1170001806920",
+            "meters": [
+              {"serialNumber": "22L4344979", "smartImportElectricityMeter": null}
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

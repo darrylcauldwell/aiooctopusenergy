@@ -14,9 +14,36 @@ from .exceptions import (
     OctopusEnergyError,
     OctopusEnergyTimeoutError,
 )
-from .models import ApplicableRate, SolarEstimate, TariffCostComparison
+from .models import (
+    ApplicableRate,
+    SmartMeterDevice,
+    SmartMeterTelemetry,
+    SolarEstimate,
+    TariffCostComparison,
+)
 
 REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=30)
+
+# Values of the API's TelemetryGrouping enum, as reported by schema
+# introspection. Checked locally so a bad value fails with a clear message
+# rather than a bare HTTP 400 from the API.
+TELEMETRY_GROUPINGS = (
+    "TEN_SECONDS",
+    "ONE_MINUTE",
+    "FIVE_MINUTES",
+    "HALF_HOURLY",
+    "HOURLY",
+)
+
+
+def _to_float(value: str | float | None) -> float | None:
+    """Telemetry numbers arrive as decimal strings such as '1.132602E+7'."""
+    return None if value is None else float(value)
+
+
+def _wh_to_kwh(value: str | float | None) -> float | None:
+    number = _to_float(value)
+    return None if number is None else number / 1000
 
 _OBTAIN_TOKEN_MUTATION = """
 mutation obtainKrakenToken($input: ObtainJSONWebTokenInput!) {
@@ -313,6 +340,111 @@ class OctopusEnergyGraphQLClient:
                 value=item["value"],
             )
             for item in container.get("solarGenerationEstimates", [])
+        ]
+
+    async def get_smart_meter_devices(
+        self, account_number: str
+    ) -> list[SmartMeterDevice]:
+        """Get the account's active smart import electricity meters.
+
+        Args:
+            account_number: Octopus account number (e.g. A-AAAA1111).
+
+        Returns:
+            One entry per meter that has a smart device ID. Meters without one
+            (traditional or non-smart meters) are left out.
+        """
+        query = """
+        query getSmartMeterDevices($accountNumber: String!) {
+          account(accountNumber: $accountNumber) {
+            electricityAgreements(active: true) {
+              meterPoint {
+                mpan
+                meters(includeInactive: false) {
+                  serialNumber
+                  smartImportElectricityMeter {
+                    deviceId
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+        data = await self._execute(
+            query, variables={"accountNumber": account_number}
+        )
+        account = data.get("account") or {}
+        devices: list[SmartMeterDevice] = []
+        for agreement in account.get("electricityAgreements") or []:
+            meter_point = agreement.get("meterPoint") or {}
+            for meter in meter_point.get("meters") or []:
+                smart = meter.get("smartImportElectricityMeter") or {}
+                if smart.get("deviceId"):
+                    devices.append(
+                        SmartMeterDevice(
+                            mpan=meter_point.get("mpan", ""),
+                            serial_number=meter.get("serialNumber", ""),
+                            device_id=smart["deviceId"],
+                        )
+                    )
+        return devices
+
+    async def get_smart_meter_telemetry(
+        self,
+        device_id: str,
+        *,
+        start: datetime,
+        end: datetime,
+        grouping: str = "TEN_SECONDS",
+    ) -> list[SmartMeterTelemetry]:
+        """Get Home Mini telemetry for a smart electricity meter.
+
+        Args:
+            device_id: Smart device ID from get_smart_meter_devices.
+            start: Start of the window.
+            end: End of the window.
+            grouping: One of TELEMETRY_GROUPINGS.
+
+        Returns:
+            Readings oldest first. Empty when the meter has no Home Mini.
+
+        Raises:
+            ValueError: If grouping is not a known telemetry grouping.
+        """
+        if grouping not in TELEMETRY_GROUPINGS:
+            raise ValueError(f"Unknown telemetry grouping: {grouping}")
+        query = """
+        query getSmartMeterTelemetry(
+          $deviceId: String!
+          $grouping: TelemetryGrouping
+          $start: DateTime
+          $end: DateTime
+        ) {
+          smartMeterTelemetry(deviceId: $deviceId, grouping: $grouping, start: $start, end: $end) {
+            readAt
+            consumption
+            demand
+            consumptionDelta
+          }
+        }
+        """
+        variables: dict[str, Any] = {
+            "deviceId": device_id,
+            "grouping": grouping,
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+        }
+        data = await self._execute(query, variables=variables)
+        return [
+            SmartMeterTelemetry(
+                read_at=self._parse_datetime(item["readAt"]),
+                consumption_kwh=_wh_to_kwh(item.get("consumption")),
+                demand_w=_to_float(item.get("demand")),
+                consumption_delta_kwh=_wh_to_kwh(item.get("consumptionDelta")),
+            )
+            for item in data.get("smartMeterTelemetry") or []
+            if item.get("readAt")
         ]
 
     async def get_smart_tariff_comparison(

@@ -25,6 +25,32 @@ class SolarEstimate:
 
 
 @dataclass(frozen=True)
+class SmartMeterDevice:
+    """An active smart import electricity meter and its smart device ID."""
+
+    mpan: str
+    serial_number: str
+    device_id: str
+
+
+@dataclass(frozen=True)
+class SmartMeterTelemetry:
+    """One Home Mini reading of a smart electricity meter.
+
+    Octopus only holds telemetry for meters paired with a Home Mini. The API
+    reports Wh and W; these fields are converted to kWh and W.
+    """
+
+    read_at: datetime
+    consumption_kwh: float | None
+    """Cumulative meter register."""
+    demand_w: float | None
+    """Instantaneous import power."""
+    consumption_delta_kwh: float | None
+    """Energy imported since the previous reading in the requested grouping."""
+
+
+@dataclass(frozen=True)
 class TariffCostComparison:
     """A tariff cost comparison result from GraphQL."""
 
