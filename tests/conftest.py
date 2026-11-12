@@ -119,6 +119,12 @@ def smart_meter_devices_graphql_response() -> dict:
 
 
 @pytest.fixture
+def smart_gas_meter_devices_graphql_response() -> dict:
+    """Return mock GraphQL smart gas meter devices response."""
+    return json.loads((FIXTURES / "smart_gas_meter_devices_graphql.json").read_text())
+
+
+@pytest.fixture
 def smart_meter_telemetry_graphql_response() -> dict:
     """Return mock GraphQL smart meter telemetry response."""
     return json.loads((FIXTURES / "smart_meter_telemetry_graphql.json").read_text())

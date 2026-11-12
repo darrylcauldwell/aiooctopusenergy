@@ -11,6 +11,7 @@ import pytest
 from aiooctopusenergy import (
     ApplicableRate,
     OctopusEnergyGraphQLClient,
+    SmartGasMeterDevice,
     SmartMeterDevice,
     SmartMeterTelemetry,
     SolarEstimate,
@@ -289,6 +290,51 @@ class TestGetSmartMeterDevices:
         )
 
         assert await client.get_smart_meter_devices("A-AAAA1111") == []
+
+
+class TestGetSmartGasMeterDevices:
+    @pytest.mark.asyncio
+    async def test_success_skips_meters_without_a_smart_device(
+        self,
+        mock_session,
+        token_response,
+        smart_gas_meter_devices_graphql_response,
+    ):
+        mock_session.post = MagicMock(
+            side_effect=[
+                _mock_post_response(token_response),
+                _mock_post_response(smart_gas_meter_devices_graphql_response),
+            ]
+        )
+        client = OctopusEnergyGraphQLClient(
+            api_key="sk_live_test", session=mock_session
+        )
+
+        result = await client.get_smart_gas_meter_devices("A-AAAA1111")
+
+        assert result == [
+            SmartGasMeterDevice(
+                mprn="2112316000",
+                serial_number="E6E07422582221",
+                device_id="44-11-02-00-00-18-41-F8",
+            )
+        ]
+        variables = mock_session.post.call_args_list[1].kwargs["json"]["variables"]
+        assert variables == {"accountNumber": "A-AAAA1111"}
+
+    @pytest.mark.asyncio
+    async def test_no_account(self, mock_session, token_response):
+        mock_session.post = MagicMock(
+            side_effect=[
+                _mock_post_response(token_response),
+                _mock_post_response({"data": {"account": None}}),
+            ]
+        )
+        client = OctopusEnergyGraphQLClient(
+            api_key="sk_live_test", session=mock_session
+        )
+
+        assert await client.get_smart_gas_meter_devices("A-AAAA1111") == []
 
 
 class TestGetSmartMeterTelemetry:

@@ -1,0 +1,17 @@
+{
+  "data": {
+    "account": {
+      "gasAgreements": [
+        {
+          "meterPoint": {
+            "mprn": "2112316000",
+            "meters": [
+              {"serialNumber": "E6E07422582221", "smartGasMeter": {"deviceId": "44-11-02-00-00-18-41-F8"}},
+              {"serialNumber": "OLDGAS0001", "smartGasMeter": null}
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -34,18 +34,28 @@ class SmartMeterDevice:
 
 
 @dataclass(frozen=True)
+class SmartGasMeterDevice:
+    """An active smart gas meter and its smart device ID."""
+
+    mprn: str
+    serial_number: str
+    device_id: str
+
+
+@dataclass(frozen=True)
 class SmartMeterTelemetry:
-    """One Home Mini reading of a smart electricity meter.
+    """One Home Mini reading of a smart electricity or gas meter.
 
     Octopus only holds telemetry for meters paired with a Home Mini. The API
-    reports Wh and W; these fields are converted to kWh and W.
+    reports Wh and W; these fields are converted to kWh and W. Gas arrives
+    already converted from m³ to kWh, and carries no demand.
     """
 
     read_at: datetime
     consumption_kwh: float | None
     """Cumulative meter register."""
     demand_w: float | None
-    """Instantaneous import power."""
+    """Instantaneous import power. Always None for gas."""
     consumption_delta_kwh: float | None
     """Energy imported since the previous reading in the requested grouping."""
 

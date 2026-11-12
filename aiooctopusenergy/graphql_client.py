@@ -16,6 +16,7 @@ from .exceptions import (
 )
 from .models import (
     ApplicableRate,
+    SmartGasMeterDevice,
     SmartMeterDevice,
     SmartMeterTelemetry,
     SolarEstimate,
@@ -390,6 +391,54 @@ class OctopusEnergyGraphQLClient:
                     )
         return devices
 
+    async def get_smart_gas_meter_devices(
+        self, account_number: str
+    ) -> list[SmartGasMeterDevice]:
+        """Get the account's active smart gas meters.
+
+        Args:
+            account_number: Octopus account number (e.g. A-AAAA1111).
+
+        Returns:
+            One entry per meter that has a smart device ID. Meters without one
+            (traditional or non-smart meters) are left out.
+        """
+        query = """
+        query getSmartGasMeterDevices($accountNumber: String!) {
+          account(accountNumber: $accountNumber) {
+            gasAgreements(active: true) {
+              meterPoint {
+                mprn
+                meters(includeInactive: false) {
+                  serialNumber
+                  smartGasMeter {
+                    deviceId
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+        data = await self._execute(
+            query, variables={"accountNumber": account_number}
+        )
+        account = data.get("account") or {}
+        devices: list[SmartGasMeterDevice] = []
+        for agreement in account.get("gasAgreements") or []:
+            meter_point = agreement.get("meterPoint") or {}
+            for meter in meter_point.get("meters") or []:
+                smart = meter.get("smartGasMeter") or {}
+                if smart.get("deviceId"):
+                    devices.append(
+                        SmartGasMeterDevice(
+                            mprn=meter_point.get("mprn", ""),
+                            serial_number=meter.get("serialNumber", ""),
+                            device_id=smart["deviceId"],
+                        )
+                    )
+        return devices
+
     async def get_smart_meter_telemetry(
         self,
         device_id: str,
@@ -398,10 +447,15 @@ class OctopusEnergyGraphQLClient:
         end: datetime,
         grouping: str = "TEN_SECONDS",
     ) -> list[SmartMeterTelemetry]:
-        """Get Home Mini telemetry for a smart electricity meter.
+        """Get Home Mini telemetry for a smart electricity or gas meter.
+
+        A gas meter uploads once every 30 minutes. With TEN_SECONDS grouping,
+        each gas reading's consumption_delta_kwh is the half-hour that ended
+        at the last :00 or :30 before read_at, not the 30 minutes up to it.
 
         Args:
-            device_id: Smart device ID from get_smart_meter_devices.
+            device_id: Smart device ID from get_smart_meter_devices or
+                get_smart_gas_meter_devices.
             start: Start of the window.
             end: End of the window.
             grouping: One of TELEMETRY_GROUPINGS.

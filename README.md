@@ -111,7 +111,8 @@ GraphQL client with JWT authentication. Can be used as an async context manager.
 - `get_solar_generation_estimate(postcode, *, from_date)` — Hourly solar generation estimates
 - `get_smart_tariff_comparison(*, account_number, mpan)` — Tariff cost comparison
 - `get_smart_meter_devices(account_number)` — Active smart import electricity meters and their device IDs
-- `get_smart_meter_telemetry(device_id, *, start, end, grouping)` — Home Mini readings (demand in W, consumption in kWh); `grouping` is one of `TEN_SECONDS`, `ONE_MINUTE`, `FIVE_MINUTES`, `HALF_HOURLY`, `HOURLY`
+- `get_smart_gas_meter_devices(account_number)` — Active smart gas meters and their device IDs
+- `get_smart_meter_telemetry(device_id, *, start, end, grouping)` — Home Mini readings (demand in W, consumption in kWh) for either meter; gas has no demand and reports once every 30 minutes. `grouping` is one of `TEN_SECONDS`, `ONE_MINUTE`, `FIVE_MINUTES`, `HALF_HOURLY`, `HOURLY`
 
 ### Exceptions
 
