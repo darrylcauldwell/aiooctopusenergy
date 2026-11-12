@@ -449,9 +449,11 @@ class OctopusEnergyGraphQLClient:
     ) -> list[SmartMeterTelemetry]:
         """Get Home Mini telemetry for a smart electricity or gas meter.
 
-        A gas meter uploads once every 30 minutes. With TEN_SECONDS grouping,
-        each gas reading's consumption_delta_kwh is the half-hour that ended
-        at the last :00 or :30 before read_at, not the 30 minutes up to it.
+        A gas meter uploads about once every 30 minutes. With TEN_SECONDS
+        grouping, each gas reading carries the register at the last :00 or
+        :30 at or before read_at, so its consumption_delta_kwh runs from the
+        previous reading's boundary to that one: normally a half-hour, an
+        hour when an upload slips past a boundary.
 
         Args:
             device_id: Smart device ID from get_smart_meter_devices or
